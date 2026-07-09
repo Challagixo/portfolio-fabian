@@ -1,0 +1,15 @@
+CÓMO ACTIVAR LA MÚSICA DE FONDO
+================================
+1. Consigue una canción libre de derechos (funk/soul):
+   - https://pixabay.com/music/  (buscar "funk" o "groove")
+   - YouTube Audio Library (studio.youtube.com > Biblioteca de audio)
+   - https://freemusicarchive.org
+2. Descárgala en formato MP3.
+3. Renómbrala exactamente como: track.mp3
+4. Ponla en esta carpeta (music/track.mp3) y sube el cambio.
+
+La barra de música aparece sola cuando el archivo existe.
+Volumen: 50% · Loop automático · Parte al entrar (o con el primer toque si el navegador bloquea el autoplay).
+
+IMPORTANTE: no uses canciones comerciales (artistas conocidos) —
+GitHub puede dar de baja el sitio por reclamo de derechos de autor.

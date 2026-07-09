@@ -362,6 +362,37 @@
   .wa-float.dim{opacity:0; transform:translateY(10px) scale(.85); pointer-events:none;}
   .wa-float:hover{transform:translateY(0) scale(1.08);}
   @media (max-width:600px){ .wa-float{bottom:18px; right:16px; width:52px; height:52px;} .wa-float svg{width:32px; height:32px;} }
+
+  /* ---------- Music bar ---------- */
+  .music-bar{
+    position:fixed; bottom:24px; left:24px; z-index:60;
+    display:flex; align-items:center; gap:10px;
+    background:var(--card); border:2px solid var(--ink); border-radius:999px;
+    padding:8px 16px 8px 8px; box-shadow:3px 3px 0 rgba(0,0,0,.18);
+    font-family:'Kalam'; font-weight:700; font-size:12.5px; color:var(--ink);
+    cursor:pointer; user-select:none; transform:rotate(-1deg);
+    opacity:0; pointer-events:none; transition:opacity .3s ease, transform .2s ease;
+  }
+  .music-bar.ready{opacity:1; pointer-events:auto;}
+  .music-bar:hover{transform:rotate(0deg) scale(1.04);}
+  .music-vinyl{
+    width:34px; height:34px; border-radius:50%; position:relative; flex:0 0 auto;
+    background:radial-gradient(circle at center, var(--card) 0 4px, var(--ink) 4px 6px, #22307a 6px 100%);
+    border:2px solid var(--ink);
+  }
+  .music-vinyl::after{
+    content:''; position:absolute; inset:6px; border-radius:50%;
+    border:1.5px dashed rgba(252,250,244,.4);
+  }
+  .music-bar.playing .music-vinyl{animation:vinylSpin 2.4s linear infinite;}
+  @keyframes vinylSpin{to{transform:rotate(360deg);}}
+  .music-label{max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .music-state{font-family:'IBM Plex Mono'; font-size:10px; opacity:.65; display:block; font-weight:400;}
+  @media (max-width:600px){
+    .music-bar{bottom:18px; left:14px; padding:6px 12px 6px 6px;}
+    .music-label{max-width:92px;}
+    .music-vinyl{width:28px; height:28px;}
+  }
   .foot-note{margin-top:44px; font-family:'Kalam'; font-size:12px; font-weight:700; opacity:.7; text-transform:uppercase; color:var(--paper);}
 
   /* ---------- scattered decorative doodles ---------- */
@@ -1046,6 +1077,12 @@
   </svg>
 </a>
 
+<audio id="bgMusic" src="music/track.mp3" loop preload="auto"></audio>
+<button class="music-bar" id="musicBar" aria-label="Reproducir o pausar música de fondo">
+  <span class="music-vinyl"></span>
+  <span class="music-label">Música<span class="music-state" id="musicState">tocar para reproducir</span></span>
+</button>
+
 <!-- Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-box">
@@ -1320,6 +1357,49 @@
         photoStack.style.transform = '';
       });
     }
+  }
+
+  // ---- Música de fondo: volumen 50%, autoplay con fallback a primera interacción ----
+  const bgMusic = document.getElementById('bgMusic');
+  const musicBar = document.getElementById('musicBar');
+  const musicState = document.getElementById('musicState');
+  if (bgMusic && musicBar) {
+    bgMusic.volume = 0.5;
+    let musicAvailable = false;
+
+    const setUI = () => {
+      musicBar.classList.toggle('playing', !bgMusic.paused);
+      musicState.textContent = bgMusic.paused ? 'tocar para reproducir' : 'sonando · toca para pausar';
+    };
+
+    bgMusic.addEventListener('canplaythrough', () => {
+      if (musicAvailable) return;
+      musicAvailable = true;
+      musicBar.classList.add('ready');
+      // intento de autoplay (los navegadores suelen bloquearlo sin interacción)
+      bgMusic.play().then(setUI).catch(() => {
+        // bloqueado: partir con la primera interacción del usuario
+        const startOnce = () => {
+          bgMusic.play().then(setUI).catch(() => {});
+          ['pointerdown','keydown','touchstart','wheel'].forEach(ev => document.removeEventListener(ev, startOnce));
+        };
+        ['pointerdown','keydown','touchstart','wheel'].forEach(ev => document.addEventListener(ev, startOnce, { once:false, passive:true }));
+        setUI();
+      });
+    }, { once:true });
+
+    bgMusic.addEventListener('error', () => {
+      musicBar.classList.remove('ready'); // sin archivo de música: la barra no aparece
+    });
+
+    musicBar.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (bgMusic.paused) bgMusic.play().then(setUI).catch(() => {});
+      else { bgMusic.pause(); setUI(); }
+    });
+
+    bgMusic.addEventListener('play', setUI);
+    bgMusic.addEventListener('pause', setUI);
   }
 
   // ---- Copy email ----
