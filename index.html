@@ -1387,28 +1387,26 @@
   const musicVol = document.getElementById('musicVol');
   if (bgMusic && musicBar) {
     bgMusic.volume = 0.5;
-    let musicAvailable = false;
 
     const setUI = () => {
       musicBar.classList.toggle('playing', !bgMusic.paused);
       musicState.textContent = bgMusic.paused ? 'tocar para reproducir' : 'sonando';
     };
 
-    bgMusic.addEventListener('canplaythrough', () => {
-      if (musicAvailable) return;
-      musicAvailable = true;
-      musicBar.classList.add('ready');
-      // intento de autoplay (los navegadores suelen bloquearlo sin interacción)
-      bgMusic.play().then(setUI).catch(() => {
-        // bloqueado: partir con la primera interacción del usuario
-        const startOnce = () => {
-          bgMusic.play().then(setUI).catch(() => {});
-          ['pointerdown','keydown','touchstart','wheel'].forEach(ev => document.removeEventListener(ev, startOnce, { capture:true }));
-        };
-        ['pointerdown','keydown','touchstart','wheel'].forEach(ev => document.addEventListener(ev, startOnce, { capture:true, passive:true }));
-        setUI();
-      });
-    }, { once:true });
+    // Mostrar la barra de inmediato (iOS/Android bloquean la pre-descarga de audio,
+    // por lo que esperar 'canplaythrough' dejaba la barra invisible en celulares)
+    musicBar.classList.add('ready');
+
+    // intento de autoplay (los navegadores suelen bloquearlo sin interacción)
+    bgMusic.play().then(setUI).catch(() => {
+      // bloqueado: partir con la primera interacción del usuario
+      const startOnce = () => {
+        bgMusic.play().then(setUI).catch(() => {});
+        ['pointerdown','keydown','touchstart','wheel'].forEach(ev => document.removeEventListener(ev, startOnce, { capture:true }));
+      };
+      ['pointerdown','keydown','touchstart','wheel'].forEach(ev => document.addEventListener(ev, startOnce, { capture:true, passive:true }));
+      setUI();
+    });
 
     bgMusic.addEventListener('error', () => {
       musicBar.classList.remove('ready'); // sin archivo de música: la barra no aparece
