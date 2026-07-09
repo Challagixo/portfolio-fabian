@@ -1432,6 +1432,27 @@
 
     bgMusic.addEventListener('play', setUI);
     bgMusic.addEventListener('pause', setUI);
+
+    // ---- Pausar la música mientras un video de la página suena con audio ----
+    let musicPausedByVideo = false;
+    const anyUnmutedVideoPlaying = () =>
+      Array.from(document.querySelectorAll('video')).some(v => !v.paused && !v.muted && v.volume > 0);
+
+    const onVideoState = () => {
+      if (anyUnmutedVideoPlaying()) {
+        if (!bgMusic.paused) {
+          musicPausedByVideo = true;
+          bgMusic.pause();
+        }
+      } else if (musicPausedByVideo) {
+        musicPausedByVideo = false;
+        bgMusic.play().catch(() => {});
+      }
+    };
+
+    document.querySelectorAll('video').forEach(v => {
+      ['play','pause','ended','volumechange'].forEach(ev => v.addEventListener(ev, onVideoState));
+    });
   }
 
   // ---- Copy email ----
